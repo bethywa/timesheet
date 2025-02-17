@@ -57,7 +57,7 @@ const routes = [
         component: Login,
       },
     ],
-  }
+  },
 ];
 
 // Create the router instance
@@ -67,10 +67,10 @@ const router = createRouter({
 });
 
  //router.beforeEach((to, from, next) => {
- // const { cookies } = useCookies();
+  //const { cookies } = useCookies();
  // const isAuthenticated = cookies.get("token");
   //if (to.name !== "Login" && !isAuthenticated) next({ name: "Login" });
- //  else next();
- //});
+  //else next();
+//});
 
 export default router;

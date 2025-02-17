@@ -5,14 +5,14 @@
     <!-- Time Entry Form -->
     <v-form @submit.prevent="addTimeEntry" v-model="valid">
       <v-text-field
-        v-model="editedItem.user_ID"
+        v-model="editedItem.user_id"
         label="User ID"
         placeholder="Enter user ID"
         :rules="[rules.required]"
         outlined
       />
       <v-text-field
-        v-model="editedItem.task_ID"
+        v-model="editedItem.task_id"
         label="Task ID"
         placeholder="Enter task ID"
         :rules="[rules.required]"
@@ -45,7 +45,7 @@
 
     <!-- Time Entries Table -->
     <v-container>
-      <v-data-table :headers="headers" :items="tasks">
+      <v-data-table :headers="headers" :items="timeEntries">
         <template v-slot:top>
           <v-toolbar flat>
             <v-toolbar-title>Logged Entries</v-toolbar-title>
@@ -67,13 +67,13 @@
                     <v-row>
                       <v-col cols="12" md="4" sm="6">
                         <v-text-field
-                          v-model="editedItem.user_ID"
+                          v-model="editedItem.user_id"
                           label="User ID"
                         ></v-text-field>
                       </v-col>
                       <v-col cols="12" md="4" sm="6">
                         <v-text-field
-                          v-model="editedItem.task_ID"
+                          v-model="editedItem.task_id"
                           label="Task ID"
                         ></v-text-field>
                       </v-col>
@@ -139,8 +139,11 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useTimeEntriesStore } from "@/stores/timeEntries"; // Import the store
 
+// Initialize the store
+const timeEntriesStore = useTimeEntriesStore();
 
 // Reactive variables
 const valid = ref(false);
@@ -148,56 +151,36 @@ const dialog = ref(false);
 const dialogDelete = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref({
-  user_ID: null,
-  task_ID: null,
+  user_id: null,
+  task_id: null,
   start_time: null,
   end_time: null,
   duration: null,
 });
 const defaultItem = ref({
-  user_ID: null,
-  task_ID: null,
+  user_id: null,
+  task_id: null,
   start_time: null,
   end_time: null,
   duration: null,
 });
 const headers = ref([
-  {
-    title: "ID",
-    key: "id",
-  },
-  {
-    title: "User ID",
-    key: "user_ID",
-  },
-  {
-    title: "Task ID",
-    key: "task_ID",
-  },
-  {
-    title: "Start Time",
-    key: "start_time",
-  },
-  {
-    title: "End Time",
-    key: "end_time",
-  },
-  {
-    title: "Duration",
-    key: "duration",
-  },
+  { title: "ID", key: "id" },
+  { title: "User ID", key: "user_id" },
+  { title: "Task ID", key: "task_id" },
+  { title: "Start Time", key: "start_time" },
+  { title: "End Time", key: "end_time" },
+  { title: "Duration", key: "duration" },
   { title: "Actions", key: "actions", sortable: false },
 ]);
 
-const tasks = ref([
-  { id: 1, user_ID: "User1", task_ID: "Task1", start_time: "2024-01-01 08:00", end_time: "2024-01-01 10:00", duration: 2 },
-  { id: 2, user_ID: "User2", task_ID: "Task2", start_time: "2024-01-01 09:00", end_time: "2024-01-01 11:00", duration: 2 },
-  { id: 3, user_ID: "User3", task_ID: "Task3", start_time: "2024-01-01 10:00", end_time: "2024-01-01 12:00", duration: 2 },
-]);
-
-const formTitle = computed(() => {
-  return editedIndex.value === -1 ? "New Item" : "Edit Item";
+// Fetch time entries on component mount
+onMounted(async () => {
+  await timeEntriesStore.fetchTimeEntries();
 });
+
+// Get time entries from the store
+const timeEntries = computed(() => timeEntriesStore.getAllTimeEntries);
 
 // Validation rules
 const rules = {
@@ -206,70 +189,61 @@ const rules = {
 };
 
 // Add a new time entry
-const addTimeEntry = () => {
-  if (editedItem.value.user_ID && editedItem.value.task_ID && editedItem.value.start_time && editedItem.value.end_time && editedItem.value.duration) {
-    const newEntry = {
-      id: tasks.value.length + 1, // Generate a new ID
-      user_ID: editedItem.value.user_ID,
-      task_ID: editedItem.value.task_ID,
-      start_time: editedItem.value.start_time,
-      end_time: editedItem.value.end_time,
-      duration: parseFloat(editedItem.value.duration),
-    };
-    tasks.value.push(newEntry);
-    editedItem.value = {};
+const addTimeEntry = async () => {
+  if (valid.value) {
+    await timeEntriesStore.addTimeEntry(editedItem.value);
+    editedItem.value = { ...defaultItem.value }; // Reset form
   }
 };
 
+// Edit a time entry
 const editItem = (item) => {
-  editedIndex.value = tasks.value.indexOf(item);
-  editedItem.value = Object.assign({}, item);
+  editedIndex.value = timeEntries.value.indexOf(item);
+  editedItem.value = { ...item };
   dialog.value = true;
 };
 
+// Delete a time entry
 const deleteItem = (item) => {
-  editedIndex.value = tasks.value.indexOf(item);
-  editedItem.value = Object.assign({}, item);
+  editedIndex.value = timeEntries.value.indexOf(item);
+  editedItem.value = { ...item };
   dialogDelete.value = true;
 };
 
-const deleteItemConfirm = () => {
-  tasks.value.splice(editedIndex.value, 1);
+// Confirm deletion
+const deleteItemConfirm = async () => {
+  await timeEntriesStore.removeTimeEntry(editedItem.value.id);
   closeDelete();
 };
 
+// Close the dialog
 const close = () => {
   dialog.value = false;
-  nextTick(() => {
-    editedItem.value = Object.assign({}, defaultItem.value);
-    editedIndex.value = -1;
-  });
+  editedItem.value = { ...defaultItem.value };
+  editedIndex.value = -1;
 };
 
+// Close the delete dialog
 const closeDelete = () => {
   dialogDelete.value = false;
-  nextTick(() => {
-    editedItem.value = Object.assign({}, defaultItem.value);
-    editedIndex.value = -1;
-  });
+  editedItem.value = { ...defaultItem.value };
+  editedIndex.value = -1;
 };
 
-const save = () => {
+// Save changes (add or update)
+const save = async () => {
   if (editedIndex.value > -1) {
-    Object.assign(tasks.value[editedIndex.value], editedItem.value);
+    await timeEntriesStore.updateTimeEntry(editedItem.value);
   } else {
-    const newEntry = {
-      id: tasks.value.length + 1,
-      user_ID: editedItem.value.user_ID,
-      task_ID: editedItem.value.task_ID,
-      start_time: editedItem.value.start_time,
-      end_time: editedItem.value.end_time,
-      duration: parseFloat(editedItem.value.duration),
-    };
-    tasks.value.push(newEntry);
+    await timeEntriesStore.addTimeEntry(editedItem.value);
   }
   close();
 };
+
+// Form title
+const formTitle = computed(() => {
+  return editedIndex.value === -1 ? "New Item" : "Edit Item";
+});
 </script>
 
 <style scoped>

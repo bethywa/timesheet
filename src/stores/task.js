@@ -4,7 +4,7 @@ import apiService from "@/services/apiService";
 
 // Base URL for your backend API
 // const API_URL = 'http://localhost:3000/tasks';
-const API_URL = "http://192.168.1.1:8000/api/tasks";
+const API_URL = "http://192.168.73.62:8080/api/tasks";
 
 export const useTasksStore = defineStore("tasks", {
   state: () => ({

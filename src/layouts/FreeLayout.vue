@@ -1,7 +1,7 @@
 <template>
      <v-layout>
       <v-app-bar
-        color="blue"
+        color="rgb(91, 167, 149)"
       >
 
         <v-app-bar-title>Daily Timesheet</v-app-bar-title>

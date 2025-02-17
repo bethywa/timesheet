@@ -1,23 +1,38 @@
 <template>
-  <v-container fluid>
+  <v-container fluid class="d-flex align-center justify-center" style="height: 100vh;">
     <v-card
       class="mx-auto pa-12 pb-8"
       elevation="8"
       max-width="448"
       rounded="lg"
     >
-      <div class="text-subtitle-1 text-medium-emphasis">Account</div>
+      <!-- Project-Specific Greeting -->
+      <div class="text-center mb-6">
+        <v-img
+          src="@/assets/logo.png"
+          alt="Daily Timesheet Logo"
+          max-width="120"
+          class="mx-auto"
+        ></v-img>
+        <div class="text-h5 mt-4">Daily Timesheet</div>
+        <div class="text-body-1 text-medium-emphasis">
+          Track and manage your daily tasks and time entries.
+        </div>
+      </div>
 
+      <!-- Email Field -->
+      <div class="text-subtitle-1 text-medium-emphasis">Email</div>
       <v-text-field
         v-model="email"
         density="compact"
-        placeholder="Email address"
+        placeholder="Enter your email"
         prepend-inner-icon="mdi-email-outline"
         variant="outlined"
         autocomplete="off"
         :error-messages="emailErrors"
       ></v-text-field>
 
+      <!-- Password Field -->
       <div class="text-subtitle-1 text-medium-emphasis d-flex align-center justify-space-between">
         Password
         <a
@@ -26,10 +41,9 @@
           rel="noopener noreferrer"
           target="_blank"
         >
-          Forgot login password?
+          Forgot password?
         </a>
       </div>
-
       <v-text-field
         v-model="password"
         :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
@@ -42,6 +56,7 @@
         autocomplete="new-password"
       ></v-text-field>
 
+      <!-- Login Button -->
       <v-btn
         class="mb-8"
         color="blue"
@@ -49,35 +64,31 @@
         variant="tonal"
         block
         @click="login"
-        :disabled="!isEmailValid"
+        :disabled="!isEmailValid || !password"
       >
         Log In
       </v-btn>
 
-      <v-card-text class="text-center">
-        <a
-          class="text-blue text-decoration-none"
-          href="#"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Sign up now <v-icon icon="mdi-chevron-right"></v-icon>
-        </a>
-      </v-card-text>
+      <!-- Error Message (Optional) -->
+      <v-alert v-if="errorMessage" type="error" class="mb-4">
+        {{ errorMessage }}
+      </v-alert>
     </v-card>
   </v-container>
 </template>
 
 <script setup>
-import apiService from '@/services/apiService';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useCookies } from "vue3-cookies";
+import { useCookies } from 'vue3-cookies';
+import apiService from '@/services/apiService';
+
 const { cookies } = useCookies();
 const router = useRouter();
 const email = ref('');
 const password = ref('');
 const visible = ref(false);
+const errorMessage = ref('');
 
 // Computed property to validate email format
 const isEmailValid = computed(() => {
@@ -90,29 +101,37 @@ const emailErrors = computed(() => {
   return isEmailValid.value ? [] : ['Invalid email format'];
 });
 
+// Toggle password visibility
 const toggleVisibility = () => {
   visible.value = !visible.value;
 };
 
+// Login function
 const login = async () => {
-  if (!isEmailValid.value) {
-    return; // Prevent login if email is invalid
+  if (!isEmailValid.value || !password.value) {
+    errorMessage.value = 'Please enter a valid email and password.';
+    return;
   }
 
   try {
-    let response = await apiService.store('login', {
+    const response = await apiService.store('login', {
       email: email.value,
-      password: password.value
+      password: password.value,
     });
 
-    if (response.status == 200) { // Check if response.ok is a property
-      cookies.set("token", response.data.token, '1min')
-      router.push({ name: 'Home' });
+    if (response.status === 200) {
+      cookies.set('token', response.data.token, '1min'); // Set token in cookies
+      router.push({ name: 'Home' }); // Redirect to home page
     } else {
-      console.error('Login failed');
+      errorMessage.value = 'Login failed. Please check your credentials.';
     }
   } catch (error) {
-    console.error('An error occurred:', error);
+    errorMessage.value = 'An error occurred. Please try again later.';
+    console.error('Login error:', error);
   }
 };
 </script>
+
+<style scoped>
+/* Optional: Add custom styles here */
+</style>

@@ -134,14 +134,13 @@ const userStore = useUsersStore();
 
 // Task form for create/update
 const taskForm = ref({
-  id: null,
   title: null,
   assigned_to: null,
   description: null,
-  completed: false,
+  status: false,
 });
 
-// Table headers definition
+// Table headers definition 
 const headers = [
   { title: "#", value: "index", align: "start" },
   { title: "Title", value: "title", align: "start" },

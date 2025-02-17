@@ -4,7 +4,7 @@ import { useCookies } from "vue3-cookies";
 
 const { cookies } = useCookies();
 const baseApi = axios.create({
-  baseURL: "http://192.168.1.7:8000/api/",
+  baseURL: "http://192.168.73.62:8080/api/",
   // baseURL: 'http://127.0.0.1:8000/api/'
 });
 

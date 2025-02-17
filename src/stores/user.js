@@ -3,7 +3,7 @@ import axios from "axios";
 import apiService from "@/services/apiService";
 
 // Base URL for your backend API
-const API_URL = "http://192.168.1.1:8000/api/users"; // Updated to users
+const API_URL = "http://192.168.73.62:8080/api/users"; // Updated to users
 
 export const useUsersStore = defineStore("users", {
   state: () => ({

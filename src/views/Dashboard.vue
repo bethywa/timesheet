@@ -1,73 +1,100 @@
 <template>
   <div class="dashboard-container">
     <h1>Dashboard</h1>
-    
+
     <!-- KPI Section -->
     <div class="kpi-section">
       <h2>Key Performance Indicators</h2>
       <div class="kpi-card" v-for="kpi in kpis" :key="kpi.id">
         <p class="kpi-name">{{ kpi.name }}</p>
-        <p class="kpi-value">{{ kpi.value }}</p>
+        <p class="kpi-value">{{ kpi.value }}%</p>
+        <p class="kpi-status">
+          <v-chip :color="getKPIColor(kpi.value, kpi.expectedScore)" size="small">
+            {{ getKPIStatus(kpi.value, kpi.expectedScore) }}
+          </v-chip>
+        </p>
+        <p class="kpi-target">Target: {{ kpi.expectedScore }}%</p>
       </div>
     </div>
 
     <!-- Recent Tasks Section -->
     <div class="task-section">
       <h2>Recent Tasks</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Task Name</th>
-            <th>Status</th>
-            <th>Hours</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="task in recentTasks" :key="task.id">
-            <td>{{ task.name }}</td>
-            <td>{{ task.status }}</td>
-            <td>{{ task.hours }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <v-data-table :items="recentTasks" :headers="taskHeaders">
+        <template v-slot:item.status="{ item }">
+          <v-chip :color="getTaskStatusColor(item.status)" small>
+            {{ item.status }}
+          </v-chip>
+        </template>
+      </v-data-table>
     </div>
   </div>
 </template>
-  
-  <script setup>
-import { ref, onMounted } from "vue";
-import axios from "axios";
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useDashboardStore } from '@/stores/dashboard';
+
+// Initialize the store
+const dashboardStore = useDashboardStore();
 
 // Reactive variables
 const kpis = ref([]);
 const recentTasks = ref([]);
 
+// Table headers for recent tasks
+const taskHeaders = [
+  { title: 'Task Name', key: 'name' },
+  { title: 'Status', key: 'status' },
+  { title: 'Hours', key: 'hours' },
+];
+
 // Fetch data when the component mounts
 onMounted(async () => {
-  try {
-    // Fetch KPI data
-    const kpiResponse = await axios.get("https://your-api-endpoint.com/kpis");
-    kpis.value = kpiResponse.data;
-
-    // Fetch recent tasks
-    const taskResponse = await axios.get(
-      "https://your-api-endpoint.com/tasks/recent"
-    );
-    recentTasks.value = taskResponse.data;
-  } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-  }
+  await dashboardStore.fetchDashboardData();
+  kpis.value = dashboardStore.getKPIs;
+  recentTasks.value = dashboardStore.getRecentTasks;
 });
+
+// Helper function to get KPI color based on value and target
+const getKPIColor = (value, expected) => {
+  if (value >= expected) return 'success';
+  if (value >= expected * 0.8) return 'warning';
+  return 'error';
+};
+
+// Helper function to get KPI status text
+const getKPIStatus = (value, expected) => {
+  if (value >= expected) return 'Above Target';
+  if (value >= expected * 0.8) return 'Near Target';
+  return 'Below Target';
+};
+
+// Helper function to get task status color
+const getTaskStatusColor = (status) => {
+  switch (status) {
+    case 'Completed':
+      return 'success';
+    case 'In Progress':
+      return 'warning';
+    case 'Pending':
+      return 'error';
+    default:
+      return 'info';
+  }
+};
 </script>
-  
-  <style scoped>
+
+<style scoped>
 .dashboard-container {
   padding: 20px;
 }
+
 .kpi-section,
 .task-section {
   margin-bottom: 20px;
 }
+
 .kpi-card {
   display: inline-block;
   width: 200px;
@@ -77,26 +104,23 @@ onMounted(async () => {
   border: 1px solid #ddd;
   text-align: center;
 }
+
 .kpi-name {
   font-weight: bold;
   margin-bottom: 5px;
 }
+
 .kpi-value {
   font-size: 1.5em;
   color: #007bff;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
+
+.kpi-status {
+  margin: 5px 0;
 }
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-th {
-  background-color: #f4f4f4;
+
+.kpi-target {
+  font-size: 0.9em;
+  color: #666;
 }
 </style>
-  
