@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- App Bar -->
-    <v-app-bar app color="#14a814" height="48">
+    <v-app-bar app color="rgb(91, 167, 149)" height="48">
       <!-- Menu button to toggle the drawer -->
       <v-app-bar-nav-icon @click="toggleDrawer" />
       <v-toolbar-title>{{ currentPageTitle }}</v-toolbar-title> <!-- Dynamic title -->
@@ -27,14 +27,14 @@
         <v-list-item @click="navigateTo('Tasks')" prepend-icon="mdi-calendar-check">
           <v-list-item-title>Tasks</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="navigateTo('Dashboard')" prepend-icon="mdi-view-dashboard">
-          <v-list-item-title>Dashboard</v-list-item-title>
-        </v-list-item>
         <v-list-item @click="navigateTo('TimeEntries')" prepend-icon="mdi-clock-time-eight">
           <v-list-item-title>Time Entries</v-list-item-title>
         </v-list-item>
         <v-list-item @click="navigateTo('KPIReports')" prepend-icon="mdi-chart-box-outline">
           <v-list-item-title>KPI Reports</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="navigateTo('Dashboard')" prepend-icon="mdi-view-dashboard">
+          <v-list-item-title>Dashboard</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
@@ -105,6 +105,6 @@ const logout = () => {
 
 <style scoped>
 .nvd {
-  background:#14a814;
+  background:rgb(91, 167, 149);
 }
 </style>

@@ -3,7 +3,7 @@
     <h1>Dashboard</h1>
 
     <!-- KPI Section -->
-    <div class="kpi-section">
+    <section class="kpi-section">
       <h2>Key Performance Indicators</h2>
       <div class="kpi-card" v-for="kpi in kpis" :key="kpi.id">
         <p class="kpi-name">{{ kpi.name }}</p>
@@ -15,10 +15,10 @@
         </p>
         <p class="kpi-target">Target: {{ kpi.expectedScore }}%</p>
       </div>
-    </div>
+    </section>
 
     <!-- Recent Tasks Section -->
-    <div class="task-section">
+    <section class="task-section">
       <h2>Recent Tasks</h2>
       <v-data-table :items="recentTasks" :headers="taskHeaders">
         <template v-slot:item.status="{ item }">
@@ -27,7 +27,7 @@
           </v-chip>
         </template>
       </v-data-table>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -35,10 +35,10 @@
 import { ref, onMounted } from 'vue';
 import { useDashboardStore } from '@/stores/dashboard';
 
-// Initialize the store
+// Initialize the dashboard store
 const dashboardStore = useDashboardStore();
 
-// Reactive variables
+// Reactive state variables
 const kpis = ref([]);
 const recentTasks = ref([]);
 
@@ -49,28 +49,26 @@ const taskHeaders = [
   { title: 'Hours', key: 'hours' },
 ];
 
-// Fetch data when the component mounts
+// Fetch data on component mount
 onMounted(async () => {
   await dashboardStore.fetchDashboardData();
   kpis.value = dashboardStore.getKPIs;
   recentTasks.value = dashboardStore.getRecentTasks;
 });
 
-// Helper function to get KPI color based on value and target
+// Helper functions
 const getKPIColor = (value, expected) => {
   if (value >= expected) return 'success';
   if (value >= expected * 0.8) return 'warning';
   return 'error';
 };
 
-// Helper function to get KPI status text
 const getKPIStatus = (value, expected) => {
   if (value >= expected) return 'Above Target';
   if (value >= expected * 0.8) return 'Near Target';
   return 'Below Target';
 };
 
-// Helper function to get task status color
 const getTaskStatusColor = (status) => {
   switch (status) {
     case 'Completed':

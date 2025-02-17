@@ -11,6 +11,7 @@
               v-model="selectedPeriod"
               :items="timePeriods"
               label="Time Period"
+              @update:modelValue="fetchKPIData"
             ></v-select>
           </v-col>
           <v-col cols="12" md="4">
@@ -19,6 +20,7 @@
               label="Start Date"
               type="date"
               :disabled="selectedPeriod !== 'custom'"
+              @change="fetchKPIData"
             ></v-text-field>
           </v-col>
           <v-col cols="12" md="4">
@@ -27,6 +29,7 @@
               label="End Date"
               type="date"
               :disabled="selectedPeriod !== 'custom'"
+              @change="fetchKPIData"
             ></v-text-field>
           </v-col>
         </v-row>
@@ -111,6 +114,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import axios from 'axios'
 import { Line as LineChart } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -143,28 +147,69 @@ const dateRange = ref({
   end: ''
 })
 
-// Sample KPI data
-const kpiData = ref([
-  {
-    name: 'Task Completion Rate',
-    value: 85,
-    expectedScore: 90,
-    trend: 'up'
-  },
-  {
-    name: 'Average Task Duration',
-    value: 75,
-    expectedScore: 80,
-    trend: 'down'
-  },
-  {
-    name: 'Total Hours Worked',
-    value: 95,
-    expectedScore: 90,
-    trend: 'up'
-  }
-])
+// KPI data from backend
+const kpiData = ref([])
+const completionRateData = ref({ labels: [], datasets: [] })
+const taskDurationData = ref({ labels: [], datasets: [] })
+const hoursWorkedData = ref({ labels: [], datasets: [] })
 
+// Fetch KPI data from backend
+const fetchKPIData = async () => {
+  try {
+    const params = {
+      period: selectedPeriod.value,
+      start: dateRange.value.start,
+      end: dateRange.value.end
+    }
+
+    const response = await axios.get('/api/kpi-reports', { params })
+    const data = response.data
+
+    // Update KPI data
+    kpiData.value = data.kpis
+
+    // Update chart data
+    completionRateData.value = {
+      labels: data.chartLabels,
+      datasets: [
+        {
+          label: 'Completion Rate',
+          data: data.completionRates,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1
+        }
+      ]
+    }
+
+    taskDurationData.value = {
+      labels: data.chartLabels,
+      datasets: [
+        {
+          label: 'Average Duration (hours)',
+          data: data.taskDurations,
+          borderColor: 'rgb(255, 99, 132)',
+          tension: 0.1
+        }
+      ]
+    }
+
+    hoursWorkedData.value = {
+      labels: data.chartLabels,
+      datasets: [
+        {
+          label: 'Hours Worked',
+          data: data.hoursWorked,
+          borderColor: 'rgb(54, 162, 235)',
+          tension: 0.1
+        }
+      ]
+    }
+  } catch (error) {
+    console.error('Error fetching KPI data:', error)
+  }
+}
+
+// Helper functions
 const getKPIColor = (value, expected) => {
   if (value >= expected) return 'success'
   if (value >= expected * 0.8) return 'warning'
@@ -188,46 +233,10 @@ const chartOptions = {
   }
 }
 
-// Sample chart data
-const completionRateData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-  datasets: [
-    {
-      label: 'Completion Rate',
-      data: [75, 80, 85, 90, 85],
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.1
-    }
-  ]
-}
-
-const taskDurationData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-  datasets: [
-    {
-      label: 'Average Duration (hours)',
-      data: [4, 3.5, 4.2, 3.8, 3.6],
-      borderColor: 'rgb(255, 99, 132)',
-      tension: 0.1
-    }
-  ]
-}
-
-const hoursWorkedData = {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-  datasets: [
-    {
-      label: 'Hours Worked',
-      data: [8, 7.5, 8.2, 8.5, 7.8],
-      borderColor: 'rgb(54, 162, 235)',
-      tension: 0.1
-    }
-  ]
-}
-
 // Lifecycle hooks
 onMounted(() => {
   mounted.value = true
+  fetchKPIData() // Fetch data on component mount
 })
 
 onBeforeUnmount(() => {
