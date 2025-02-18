@@ -4,7 +4,7 @@ import apiService from "@/services/apiService";
 
 // Base URL for your backend API
 // const API_URL = 'http://localhost:3000/tasks';
-const API_URL = "http://192.168.73.62:8080/api/tasks";
+const API_URL = "http://172.16.29.163:8080/api/tasks";
 
 export const useTasksStore = defineStore("tasks", {
   state: () => ({
@@ -15,6 +15,7 @@ export const useTasksStore = defineStore("tasks", {
       try {
         const response = await apiService.all("tasks");
         this.tasks = response.data;
+        console.log(response.data); 
       } catch (error) {}
     },
     async addTask(task) {

@@ -12,7 +12,7 @@
               :items="timePeriods"
               label="Time Period"
               @update:modelValue="fetchKPIData"
-            ></v-select>
+            />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field
@@ -21,7 +21,7 @@
               type="date"
               :disabled="selectedPeriod !== 'custom'"
               @change="fetchKPIData"
-            ></v-text-field>
+            />
           </v-col>
           <v-col cols="12" md="4">
             <v-text-field
@@ -30,7 +30,7 @@
               type="date"
               :disabled="selectedPeriod !== 'custom'"
               @change="fetchKPIData"
-            ></v-text-field>
+            />
           </v-col>
         </v-row>
       </v-card-text>
@@ -80,8 +80,8 @@
               <v-window-item value="completion">
                 <div class="pa-4" style="height: 300px">
                   <line-chart
-                    v-if="mounted"
-                    :chart-data="completionRateData"
+                    v-if="completionRateData.labels.length > 0"
+                    :chart-data="completionRateData || []"
                     :options="chartOptions"
                   />
                 </div>
@@ -89,7 +89,7 @@
               <v-window-item value="duration">
                 <div class="pa-4" style="height: 300px">
                   <line-chart
-                    v-if="mounted"
+                    v-if="taskDurationData.labels.length > 0"
                     :chart-data="taskDurationData"
                     :options="chartOptions"
                   />
@@ -98,7 +98,7 @@
               <v-window-item value="hours">
                 <div class="pa-4" style="height: 300px">
                   <line-chart
-                    v-if="mounted"
+                    v-if="hoursWorkedData.labels.length > 0"
                     :chart-data="hoursWorkedData"
                     :options="chartOptions"
                   />
@@ -113,9 +113,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import axios from 'axios'
-import { Line as LineChart } from 'vue-chartjs'
+import { ref, computed, onMounted } from 'vue';
+import { Line as LineChart } from 'vue-chartjs';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -124,8 +123,9 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend
-} from 'chart.js'
+  Legend,
+} from 'chart.js';
+import { useKPIReportsStore } from '@/stores/Kpireports';
 
 // Register Chart.js components
 ChartJS.register(
@@ -135,92 +135,27 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
-)
+  Legend,
+);
 
-const mounted = ref(false)
-const activeTab = ref('completion')
-const selectedPeriod = ref('week')
-const timePeriods = ['day', 'week', 'month', 'quarter', 'custom']
-const dateRange = ref({
-  start: '',
-  end: ''
-})
+const store = useKPIReportsStore();
+const activeTab = ref('completion');
+const selectedPeriod = ref('week');
+const timePeriods = ['day', 'week', 'month', 'quarter', 'custom'];
+const dateRange = ref({ start: '', end: '' });
 
-// KPI data from backend
-const kpiData = ref([])
-const completionRateData = ref({ labels: [], datasets: [] })
-const taskDurationData = ref({ labels: [], datasets: [] })
-const hoursWorkedData = ref({ labels: [], datasets: [] })
+// Fetch KPI data on component mount
+onMounted(() => {
+  store.fetchKPIData();
+});
 
-// Fetch KPI data from backend
-const fetchKPIData = async () => {
-  try {
-    const params = {
-      period: selectedPeriod.value,
-      start: dateRange.value.start,
-      end: dateRange.value.end
-    }
-
-    const response = await axios.get('/api/kpi-reports', { params })
-    const data = response.data
-
-    // Update KPI data
-    kpiData.value = data.kpis
-
-    // Update chart data
-    completionRateData.value = {
-      labels: data.chartLabels,
-      datasets: [
-        {
-          label: 'Completion Rate',
-          data: data.completionRates,
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1
-        }
-      ]
-    }
-
-    taskDurationData.value = {
-      labels: data.chartLabels,
-      datasets: [
-        {
-          label: 'Average Duration (hours)',
-          data: data.taskDurations,
-          borderColor: 'rgb(255, 99, 132)',
-          tension: 0.1
-        }
-      ]
-    }
-
-    hoursWorkedData.value = {
-      labels: data.chartLabels,
-      datasets: [
-        {
-          label: 'Hours Worked',
-          data: data.hoursWorked,
-          borderColor: 'rgb(54, 162, 235)',
-          tension: 0.1
-        }
-      ]
-    }
-  } catch (error) {
-    console.error('Error fetching KPI data:', error)
-  }
-}
-
-// Helper functions
-const getKPIColor = (value, expected) => {
-  if (value >= expected) return 'success'
-  if (value >= expected * 0.8) return 'warning'
-  return 'error'
-}
-
-const getKPIStatus = (value, expected) => {
-  if (value >= expected) return 'Above Target'
-  if (value >= expected * 0.8) return 'Near Target'
-  return 'Below Target'
-}
+// Computed properties for store data
+const kpiData = computed(() => store.kpiData);
+const completionRateData = computed(() => store.completionRateData);
+const taskDurationData = computed(() => store.taskDurationData);
+const hoursWorkedData = computed(() => store.hoursWorkedData);
+const getKPIColor = (value, expected) => store.getKPIColor(value, expected);
+const getKPIStatus = (value, expected) => store.getKPIStatus(value, expected);
 
 // Chart configuration
 const chartOptions = {
@@ -228,20 +163,10 @@ const chartOptions = {
   maintainAspectRatio: false,
   scales: {
     y: {
-      beginAtZero: true
-    }
-  }
-}
-
-// Lifecycle hooks
-onMounted(() => {
-  mounted.value = true
-  fetchKPIData() // Fetch data on component mount
-})
-
-onBeforeUnmount(() => {
-  mounted.value = false
-})
+      beginAtZero: true,
+    },
+  },
+};
 </script>
 
 <style scoped>

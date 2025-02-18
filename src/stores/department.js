@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import apiService from "@/services/apiService";
 
 // Base URL for your backend API10.42.0.12:8080
-const API_URL = "http://192.168.73.62:8000/api/departments"; // Updated to departments
+const API_URL = "http://172.16.29.163:8080/api/departments"; // Updated to departments
 
 export const useDepartmentsStore = defineStore("departments", {
   state: () => ({

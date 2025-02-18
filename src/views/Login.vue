@@ -120,7 +120,7 @@ const login = async () => {
     });
 
     if (response.status === 200) {
-      cookies.set('token', response.data.token, '1min'); // Set token in cookies
+      cookies.set('token', response.data.token, '60min'); // Set token in cookies
       router.push({ name: 'Home' }); // Redirect to home page
     } else {
       errorMessage.value = 'Login failed. Please check your credentials.';

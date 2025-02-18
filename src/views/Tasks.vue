@@ -62,7 +62,7 @@
     <!-- Data Table for task list -->
     <v-data-table
       :headers="headers"
-      :items="tasks"
+      :items="tasksWithUserNames"
       item-value="id"
       class="elevation-1"
       :items-per-page="5"
@@ -89,11 +89,11 @@
       <template #item.name="{ item }">
         {{ item.name }}
       </template>
-
+      
       <!-- Task Status -->
       <template #item.status="{ item }">
-        <v-chip :color="item.completed ? 'green' : 'orange'" text>
-          {{ item.completed ? "Completed" : "Pending" }}
+        <v-chip :color="item.status  == 'Completed' ? 'green' : 'orange'" text>
+          {{ item.status == 'Completed' ? "completed" : "pending" }}
         </v-chip>
       </template>
 
@@ -144,7 +144,7 @@ const taskForm = ref({
 const headers = [
   { title: "#", value: "index", align: "start" },
   { title: "Title", value: "title", align: "start" },
-  { title: "Assigned To", value: "assigned_to.name", align: "start" },
+  { title: "Assigned To", value: "assignedToName", align: "start" },
   { title: "Description", value: "description", align: "start" },
   { title: "Status", value: "status", align: "center" },
   { title: "Actions", value: "actions", align: "end", sortable: false },
@@ -156,11 +156,22 @@ const users = computed(() => userStore.users);
 // Computed tasks list connected to the store
 const tasks = computed(() => tasksStore.tasks);
 
+const tasksWithUserNames = computed(() => {
+  return tasks.value.map(task => {
+    const assignedUser = users.value.find(user => user.id === task.assigned_to);
+    return {
+      ...task,
+      assignedToName: assignedUser ? assignedUser.name : "Unassigned", // Fallback for unassigned tasks
+    };
+  });
+});
+
 // Fetch tasks from the backend on component mount
 onMounted(async () => {
   try {
     await userStore.fetchUsers();
     await tasksStore.fetchTasks();
+    
   } catch (error) {
     console.error("Error fetching tasks:", error);
   } finally {

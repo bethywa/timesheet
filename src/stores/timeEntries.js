@@ -3,7 +3,7 @@ import axios from "axios";
 import apiService from "@/services/apiService";
 
 // Base URL for your backend API
-const API_URL = "http://192.168.73.62:8080/api/timeEntries"; // Replace with your actual time entries API endpoint
+const API_URL = "http://172.16.29.163:8080/api/timeEntries"; // Replace with your actual time entries API endpoint
 
 export const useTimeEntriesStore = defineStore("timeEntries", {
   state: () => ({

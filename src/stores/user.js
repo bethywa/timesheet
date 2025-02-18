@@ -3,7 +3,7 @@ import axios from "axios";
 import apiService from "@/services/apiService";
 
 // Base URL for your backend API
-const API_URL = "http://192.168.73.62:8080/api/users"; // Updated to users
+const API_URL = "http://172.16.29.163:8080/api/users"; // Updated to users
 
 export const useUsersStore = defineStore("users", {
   state: () => ({
@@ -14,6 +14,7 @@ export const useUsersStore = defineStore("users", {
       try {
         const response = await apiService.all("users");
         this.users = response.data;
+        console.info(response.data);
       } catch (error) {}
     },
     async addUser(user) {
